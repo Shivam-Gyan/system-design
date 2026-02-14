@@ -8,7 +8,10 @@ using namespace std;
 
 // Signature Rule: method rule - The signature of the method in the child class must be the same as that of the parent class.
 class Parent{
-    virtual void print(string message) = 0;
+    public:
+    virtual void print(string message){
+        cout << "Message from Parent: " << message << endl;
+    }
 };
 
 class Child : public Parent{
@@ -18,8 +21,27 @@ class Child : public Parent{
         }
 };
 
+class Client{
+    private:
+        Parent* parent;
+
+    public:
+        Client(Parent* parent) : parent(parent) {}
+
+        void displayMessage(const string& message) {
+            parent->print(message);
+        }
+};
+
 int main(){
     Child child;
+    Parent* parentPtr = new Parent(); // LSP: Child can be substituted for Parent
     child.print("Hello from Child!");
+    parentPtr->print("Hello from Parent!");
+    Client client(parentPtr);
+    
+    client.displayMessage("Hello from Client!");
+
+    delete parentPtr;
     return 0;
 }
