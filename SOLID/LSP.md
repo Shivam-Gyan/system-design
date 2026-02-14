@@ -1,20 +1,15 @@
 
 ---
 
-# 📘 Liskov Substitution Principle (LSP) – Explained with Shopping Cart Example
+# 📘 Liskov Substitution Principle (LSP) – Bank Account Example
 
 ---
 
-# 🔷 1. What is Liskov Substitution Principle?
+# 🔷 1️⃣ What is LSP?
 
 > **Objects of a derived class must be substitutable for objects of the base class without breaking the correctness of the program.**
 
-Introduced by:
-Barbara Liskov (1987)
-
----
-
-# 🎯 Simple Meaning
+In simple words:
 
 If:
 
@@ -22,352 +17,348 @@ If:
 Derived IS-A Base
 ```
 
-Then you should be able to replace:
+Then:
 
 ```
-Base object → with → Derived object
+Derived must behave like Base.
 ```
-
-Without breaking behavior.
 
 ---
 
-# 🔥 Why LSP Exists
+# 🎯 Why LSP Is Important
 
-Inheritance is dangerous if misused.
-
-Just because:
+Inheritance is not just:
 
 ```
-Dog extends Animal
+extends
 ```
 
-Does NOT mean:
+It is a **behavioral contract**.
 
-Dog behaves correctly in all contexts where Animal is expected.
+If a derived class breaks expectations of the base class:
 
-LSP ensures:
-
-* Correct inheritance design
-* Behavioral consistency
-* Safe polymorphism
+* Polymorphism breaks
+* System becomes unstable
+* Open Closed Principle fails
 
 ---
 
-# 🛒 2. Applying LSP to Our Shopping Cart Example
+# 🏦 2️⃣ Our Banking Example Structure
 
-We already defined:
+We designed the system like this:
+
+```
+NoWithdrawableAccount  (Base Interface)
+        ↑
+WithdrawableAccount (Extended Interface)
+        ↑
+SavingAccount
+CurrentAccount
+
+FixedDepositAccount
+```
+
+---
+
+# 🔍 3️⃣ Why We Designed It This Way
+
+We separated accounts into:
+
+### 🟢 Accounts that DO NOT support withdrawal
+
+* FixedDepositAccount
+
+### 🔵 Accounts that DO support withdrawal
+
+* SavingAccount
+* CurrentAccount
+
+This separation is crucial for LSP.
+
+---
+
+# 🚨 What Would Be LSP Violation?
+
+Imagine we wrote this instead:
 
 ```cpp
-class Discount {
+class Account {
 public:
-    virtual double apply(double total) const = 0;
-    virtual ~Discount() = default;
+    virtual void deposit(double amount) = 0;
+    virtual void withdraw(double amount) = 0;
 };
 ```
 
-And derived classes:
-
-* NoDiscount
-* PercentageDiscount
-* FlatDiscount
-
-ShoppingCart depends on:
+Then:
 
 ```cpp
-Discount* discount;
-```
-
----
-
-# 🎯 LSP Rule in This Context
-
-If ShoppingCart expects:
-
-```cpp
-Discount* discount
-```
-
-Then ANY derived class must:
-
-* Respect expected behavior
-* Not break assumptions
-* Not change contract
-
----
-
-# 🔎 What Is the Contract Here?
-
-The implicit contract of `Discount::apply` is:
-
-1. It returns a valid final price.
-2. It does not modify cart.
-3. It should not return negative total.
-4. It should behave logically for any valid input.
-
-All derived classes must follow this.
-
----
-
-# ✅ Correct LSP-Compliant Discount
-
-Example:
-
-```cpp
-class PercentageDiscount : public Discount {
-private:
-    double percentage;
-
+class FixedDepositAccount : public Account {
 public:
-    PercentageDiscount(double percentage)
-        : percentage(percentage) {}
-
-    double apply(double total) const override {
-        return total * (1 - percentage / 100);
+    void withdraw(double amount) override {
+        throw runtime_error("Withdrawal not allowed!");
     }
 };
 ```
 
-This respects contract.
+⚠ Problem:
 
----
-
-# ❌ Example of LSP Violation
-
-Imagine someone writes:
-
-```cpp
-class BrokenDiscount : public Discount {
-public:
-    double apply(double total) const override {
-        return -100;  // Always negative
-    }
-};
-```
-
-Now what happens?
-
-ShoppingCart assumes:
+Base class says:
 
 ```
-apply(total) → valid discounted price
+All Accounts support withdrawal
 ```
 
-But this class violates that expectation.
+But FixedDepositAccount says:
 
-Program logic breaks.
-
-That is LSP violation.
-
----
-
-# 🔥 Another LSP Violation Example
-
-```cpp
-class ExceptionDiscount : public Discount {
-public:
-    double apply(double total) const override {
-        throw runtime_error("Cannot apply discount");
-    }
-};
 ```
-
-Now ShoppingCart must suddenly handle exceptions.
-
-Base class never indicated this behavior.
+No, I don’t.
+```
 
 This breaks substitutability.
 
----
-
-# 🧠 Deep Understanding of LSP
-
-LSP is about:
-
-> Behavioral compatibility
-
-Not just syntax compatibility.
-
-Even if code compiles:
-
-It may still violate LSP.
+This is classic LSP violation.
 
 ---
 
-# 📌 Formal LSP Conditions
+# 🔥 4️⃣ How Your Design Fixes It
 
-For Derived class:
-
-1. Preconditions must NOT be stronger than base.
-2. Postconditions must NOT be weaker.
-3. Invariants must be preserved.
-
----
-
-# 🛒 Example of Preconditions Violation
-
-Base contract:
-
-```
-apply(double total) works for any total ≥ 0
-```
-
-Derived class:
+You separated responsibilities:
 
 ```cpp
-double apply(double total) const override {
-    if (total < 1000)
-        throw runtime_error("Minimum 1000 required");
-    return total * 0.9;
-}
+class NoWithdrawableAccount {
+    virtual void deposit(double amount) = 0;
+    virtual double getBalance() const = 0;
+};
 ```
 
-Now it requires stronger condition.
-
-This violates LSP.
-
----
-
-# 🔄 Substitutability Test
-
-If this works:
+Then:
 
 ```cpp
-Discount* discount = new PercentageDiscount(10);
-ShoppingCart cart(discount);
+class WithdrawableAccount : public NoWithdrawableAccount {
+    virtual void withdraw(double amount) = 0;
+};
 ```
 
-Then this must also work:
+Now:
 
-```cpp
-Discount* discount = new FlatDiscount(200);
-ShoppingCart cart(discount);
-```
-
-And also:
-
-```cpp
-Discount* discount = new NoDiscount();
-ShoppingCart cart(discount);
-```
-
-Without any modification to ShoppingCart.
-
-That is LSP compliance.
-
----
-
-# 🏗 Relationship Between OCP and LSP
-
-OCP depends on LSP.
-
-Why?
-
-If derived classes break behavior,
-Then extension will break system.
+* FixedDepositAccount inherits only NoWithdrawableAccount
+* SavingAccount & CurrentAccount inherit WithdrawableAccount
 
 So:
 
-```
-OCP requires LSP
-```
-
-If LSP fails → OCP collapses.
+* No class is forced to implement unsupported behavior
+* Substitutability is preserved
 
 ---
 
-# 🧠 Real-World Meaning
+# 🧠 5️⃣ LSP Contract in This System
 
-LSP prevents bad inheritance design.
+### Base Contract of NoWithdrawableAccount:
 
-Classic violation example:
+1. Can deposit money
+2. Can check balance
 
-```
-Rectangle
-Square extends Rectangle
-```
-
-If Rectangle has:
-
-```
-setWidth()
-setHeight()
-```
-
-Square overriding them breaks expected behavior.
-
-That violates LSP.
+All derived classes respect this.
 
 ---
 
-# 🛒 In Our System
+### Base Contract of WithdrawableAccount:
 
-We are safe because:
+1. Can deposit
+2. Can check balance
+3. Can withdraw
 
-* All discount types behave consistently.
-* They only change how total is computed.
-* They don’t introduce unexpected side effects.
+All derived classes respect this.
+
+---
+
+# 🔄 6️⃣ Substitutability Check
+
+This must work safely:
+
+```cpp
+NoWithdrawableAccount* acc = new FixedDepositAccount(3000);
+acc->deposit(500);
+```
+
+No crash. No unexpected behavior.
+
+---
+
+This must also work:
+
+```cpp
+WithdrawableAccount* acc = new SavingAccount(1000);
+acc->withdraw(200);
+```
+
+No contract violation.
+
+---
+
+If every derived class works correctly in place of its base:
+
+✅ LSP satisfied.
+
+---
+
+# 🔬 7️⃣ Formal LSP Rules
+
+For derived class:
+
+1️⃣ Preconditions cannot be stronger
+2️⃣ Postconditions cannot be weaker
+3️⃣ Invariants must remain valid
+
+---
+
+# 📌 Example of Preconditions Violation
+
+If base allows:
+
+```
+withdraw(any positive amount)
+```
+
+But derived allows only:
+
+```
+withdraw(amount > 1000)
+```
+
+That strengthens precondition → LSP broken.
+
+---
+
+# 📌 Example of Postcondition Violation
+
+If base guarantees:
+
+```
+Balance never negative
+```
+
+But derived allows negative balance silently:
+
+LSP broken.
+
+---
+
+# 🧩 8️⃣ Why Client Class Is Clean
+
+Your `Client` class:
+
+```cpp
+vector<NoWithdrawableAccount*>
+vector<WithdrawableAccount*>
+```
+
+It clearly separates usage.
+
+It does NOT try to call withdraw on non-withdrawable accounts.
+
+Thus:
+
+* No unsafe casting
+* No runtime errors
+* No behavior mismatch
+
+LSP respected.
+
+---
+
+# 🔥 9️⃣ Relationship with Other SOLID Principles
+
+| Principle | Role Here                                      |
+| --------- | ---------------------------------------------- |
+| SRP       | Separate responsibilities of accounts          |
+| OCP       | Add new account types without modifying Client |
+| LSP       | Ensure derived accounts behave correctly       |
+| ISP       | Segregated interfaces (withdraw separated)     |
+| DIP       | Client depends on abstractions                 |
+
+Notice:
+
+Your design also demonstrates ISP naturally.
+
+---
+
+# 🎯 10️⃣ Interview-Level Explanation
+
+If interviewer asks:
+
+> How does your banking example follow LSP?
+
+Answer:
+
+> Instead of forcing all account types to implement withdraw(), I segregated interfaces into withdrawable and non-withdrawable accounts. Each derived class respects the behavioral contract of its base interface. Thus, any derived account can safely replace its base type without breaking program correctness.
+
+---
+
+# 🏗 11️⃣ Visual Understanding
+
+Correct Design:
+
+```
+NoWithdrawableAccount
+        ↑
+WithdrawableAccount
+        ↑
+SavingAccount
+CurrentAccount
+
+FixedDepositAccount
+```
+
+Incorrect Design (LSP Violation):
+
+```
+Account (deposit + withdraw)
+        ↑
+SavingAccount
+        ↑
+FixedDepositAccount  ❌ cannot withdraw
+```
+
+---
+
+# 🧠 12️⃣ Core Mental Model
+
+LSP is about:
+
+> Behavior, not just inheritance.
+
+If child cannot behave like parent,
+Inheritance is wrong.
+
+---
+
+# 🏆 Final Quick Summary
+
+LSP ensures:
+
+* Safe polymorphism
+* Correct inheritance
+* Behavioral consistency
+* No unexpected runtime errors
+
+In your banking example:
+
+* FixedDepositAccount is NOT forced to implement withdraw()
+* WithdrawableAccount extends behavior safely
+* Client interacts through correct abstraction
+* No contract violation
 
 Thus:
 
 ```
-PercentageDiscount IS substitutable for Discount
-FlatDiscount IS substitutable for Discount
-NoDiscount IS substitutable for Discount
+LSP is satisfied.
 ```
 
-LSP satisfied.
-
 ---
 
-# 🎯 Interview Explanation (Short Version)
+# 🚀 One-Line Takeaway
 
-If asked:
-
-> How does your ShoppingCart follow LSP?
-
-Answer:
-
-> All discount types inherit from the Discount interface and respect its behavioral contract. Any derived discount class can replace the base Discount type without breaking ShoppingCart logic, ensuring safe polymorphism.
+> If a child class cannot fully behave like its parent, inheritance is wrong.
 
 ---
-
-# 🔥 Difference Between OCP and LSP
-
-| OCP                                        | LSP                                    |
-| ------------------------------------------ | -------------------------------------- |
-| About extension                            | About correctness                      |
-| Add new classes without modifying old ones | Ensure derived classes behave properly |
-| Structural design principle                | Behavioral design principle            |
-
----
-
-# 🧠 Final Mental Model
-
-OCP says:
-
-> You can extend system.
-
-LSP says:
-
-> Your extensions must not break system.
-
-Both are required for clean architecture.
-
----
-
-# 🏆 Final Summary
-
-Liskov Substitution Principle ensures:
-
-* Safe inheritance
-* Predictable polymorphism
-* Stable system behavior
-* Clean architecture
-
-In ShoppingCart:
-
-* Base abstraction: Discount
-* Derived classes respect contract
-* ShoppingCart remains unchanged
-* Behavior remains correct
