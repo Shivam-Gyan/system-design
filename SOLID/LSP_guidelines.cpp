@@ -127,71 +127,89 @@ using namespace std;
 // 1. Class invariant rule: The child class must maintain the invariants of the parent class. This means that if the parent class has certain conditions or constraints that must always be true, 
 // the child class must ensure that those conditions are also true for its own instances.
 
- class Account{
-    protected:
-        double balance;
+//  class Account{
+//     protected:
+//         double balance;
 
-    public:
-        Account(double initialBalance) : balance(initialBalance) {
-            if (initialBalance < 0) {
-                throw invalid_argument("Initial balance cannot be negative.");
-            }
-        }
+//     public:
+//         Account(double initialBalance) : balance(initialBalance) {
+//             if (initialBalance < 0) {
+//                 throw invalid_argument("Initial balance cannot be negative.");
+//             }
+//         }
 
-        virtual void deposit(double amount) {
-            if (amount <= 0) {
-                throw invalid_argument("Deposit amount must be positive.");
-            }
-            balance += amount;
-        }
+//         virtual void deposit(double amount) {
+//             if (amount <= 0) {
+//                 throw invalid_argument("Deposit amount must be positive.");
+//             }
+//             balance += amount;
+//         }
 
-        virtual void withdraw(double amount) {
-            if (amount <= 0) {
-                throw invalid_argument("Withdrawal amount must be positive.");
-            }
-            if (amount > balance) {
-                throw runtime_error("Insufficient funds.");
-            }
-            balance -= amount;
-            cout << "Account: Withdrawn " << amount << ". New balance: " << balance << endl;
-        }
+//         virtual void withdraw(double amount) {
+//             if (amount <= 0) {
+//                 throw invalid_argument("Withdrawal amount must be positive.");
+//             }
+//             if (amount > balance) {
+//                 throw runtime_error("Insufficient funds.");
+//             }
+//             balance -= amount;
+//             cout << "Account: Withdrawn " << amount << ". New balance: " << balance << endl;
+//         }
 
-        virtual ~Account() {} // Virtual destructor to ensure proper cleanup of derived class objects
- };
+//         virtual ~Account() {} // Virtual destructor to ensure proper cleanup of derived class objects
+//  };
 
 
- class CheatAccount: public Account{
+//  class CheatAccount: public Account{
     
-    public:
-        CheatAccount(double initialBalance) : Account(initialBalance) {
-            // This constructor does not maintain the invariant of the Account class, as it allows for a negative balance.
-        }
+//     public:
+//         CheatAccount(double initialBalance) : Account(initialBalance) {
+//             // This constructor does not maintain the invariant of the Account class, as it allows for a negative balance.
+//         }
 
-        // This method violates the invariant of the Account class, as it allows for a negative balance.
-        void withdraw(double amount) override {
+//         // This method violates the invariant of the Account class, as it allows for a negative balance.
+//         void withdraw(double amount) override {
 
-            balance -= amount;
-            cout << "CheatAccount: Withdrawn " << amount << ". New balance: " << balance << endl;
+//             balance -= amount;
+//             cout << "CheatAccount: Withdrawn " << amount << ". New balance: " << balance << endl;
 
-        }
+//         }
 
-        ~CheatAccount() {} // destructor to ensure proper cleanup of derived class objects
- };
+//         ~CheatAccount() {} // destructor to ensure proper cleanup of derived class objects
+//  };
 
-int main(){
-    try {
-        CheatAccount* cheatAccount = new CheatAccount(100);
-        cheatAccount->withdraw(80); // This violates the invariant of the Account class, as it allows for a negative balance.
-        cheatAccount->withdraw(50); // This violates the invariant of the Account class, as it allows for a negative balance.
+// int main(){
+//     try {
+//         CheatAccount* cheatAccount = new CheatAccount(100);
+//         cheatAccount->withdraw(80); // This violates the invariant of the Account class, as it allows for a negative balance.
+//         cheatAccount->withdraw(50); // This violates the invariant of the Account class, as it allows for a negative balance.
 
-        Account* bankAccount = new Account(100); // LSP: CheatAccount can be substituted for Account
-        bankAccount->withdraw(80); // This is fine, as it maintains the invariant of the Account class.
-        bankAccount->withdraw(50); // This will throw an exception, as it violates the
-        delete cheatAccount;
-        delete bankAccount;
-    } catch (const exception& e) {
-        cerr << "Error: " << e.what() << endl;
-    }
+//         Account* bankAccount = new Account(100); // LSP: CheatAccount can be substituted for Account
+//         bankAccount->withdraw(80); // This is fine, as it maintains the invariant of the Account class.
+//         bankAccount->withdraw(50); // This will throw an exception, as it violates the
+//         delete cheatAccount;
+//         delete bankAccount;
+//     } catch (const exception& e) {
+//         cerr << "Error: " << e.what() << endl;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
+
+
+// 2. History Constraint Rule: The child class must not change the history of the parent class. 
+// This means that if the parent class has certain behaviors or states that are expected to be consistent over time, 
+// the child class must not alter those behaviors or states in a way that violates the expectations of the parent class.
+
+
+ 
+
+
+// Method Rule: The method in the child class must not change the behavior of the parent class. 
+// This means that if the parent class has certain behaviors or expectations, the child class must not alter those behaviors in a way that violates the expectations of the parent class.
+
+//  1. precondition rule: The child class must not strengthen the preconditions of the parent class. This means that if the parent class has certain conditions that must be met before a method can be called, 
+// the child class must not require additional conditions that are not met in the parent class.
+
+// 2. postcondition rule: The child class must not weaken the postconditions of the parent class. 
+// This means that if the parent class has certain expected outcomes after a method is called, the child class must not produce weaker outcomes than those expected by the parent class.
