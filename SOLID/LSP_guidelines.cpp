@@ -119,4 +119,79 @@ using namespace std;
 
 // Exception Rule: The method in the child class must not throw exceptions that are not thrown by the method in the parent class.
 
- 
+// same as return type rule but with exception handling instead of return type
+
+
+// Property Rule: The properties of the child class must be consistent with those of the parent class. This means that if the parent class has certain properties or invariants, the child class must maintain those properties and not violate them.
+
+// 1. Class invariant rule: The child class must maintain the invariants of the parent class. This means that if the parent class has certain conditions or constraints that must always be true, 
+// the child class must ensure that those conditions are also true for its own instances.
+
+ class Account{
+    protected:
+        double balance;
+
+    public:
+        Account(double initialBalance) : balance(initialBalance) {
+            if (initialBalance < 0) {
+                throw invalid_argument("Initial balance cannot be negative.");
+            }
+        }
+
+        virtual void deposit(double amount) {
+            if (amount <= 0) {
+                throw invalid_argument("Deposit amount must be positive.");
+            }
+            balance += amount;
+        }
+
+        virtual void withdraw(double amount) {
+            if (amount <= 0) {
+                throw invalid_argument("Withdrawal amount must be positive.");
+            }
+            if (amount > balance) {
+                throw runtime_error("Insufficient funds.");
+            }
+            balance -= amount;
+            cout << "Account: Withdrawn " << amount << ". New balance: " << balance << endl;
+        }
+
+        virtual ~Account() {} // Virtual destructor to ensure proper cleanup of derived class objects
+ };
+
+
+ class CheatAccount: public Account{
+    
+    public:
+        CheatAccount(double initialBalance) : Account(initialBalance) {
+            // This constructor does not maintain the invariant of the Account class, as it allows for a negative balance.
+        }
+
+        // This method violates the invariant of the Account class, as it allows for a negative balance.
+        void withdraw(double amount) override {
+
+            balance -= amount;
+            cout << "CheatAccount: Withdrawn " << amount << ". New balance: " << balance << endl;
+
+        }
+
+        ~CheatAccount() {} // destructor to ensure proper cleanup of derived class objects
+ };
+
+int main(){
+    try {
+        CheatAccount* cheatAccount = new CheatAccount(100);
+        cheatAccount->withdraw(80); // This violates the invariant of the Account class, as it allows for a negative balance.
+        cheatAccount->withdraw(50); // This violates the invariant of the Account class, as it allows for a negative balance.
+
+        Account* bankAccount = new Account(100); // LSP: CheatAccount can be substituted for Account
+        bankAccount->withdraw(80); // This is fine, as it maintains the invariant of the Account class.
+        bankAccount->withdraw(50); // This will throw an exception, as it violates the
+        delete cheatAccount;
+        delete bankAccount;
+    } catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+
+    return 0;
+}
